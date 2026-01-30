@@ -73,12 +73,13 @@ class LaravelToolsRespond
             ], $e->getCode() ?: 500);
         } finally {
             if ($request['log_disabled'] !== true && $this->function_log) {
-                $this->function_log(
-                    $request['log_type'] ?? "UNDEFINED",
-                    $request['log_id'] ?? "UNDEFINED",
+                call_user_func(
+                    $this->function_log,
+                    $request['log_type'] ?? 'UNDEFINED',
+                    $request['log_id'] ?? 'UNDEFINED',
                     [
                         'body' => $request->all(),
-                        'data' => $data
+                        'data' => $data,
                     ]
                 );
             }
