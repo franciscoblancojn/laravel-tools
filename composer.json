@@ -1,0 +1,14 @@
+{
+    "name": "franciscoblancojn/laravel-tools",
+    "description": "Libreria con herramientas para Laravel",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "franciscoblancojn\\LaravelTools\\": "src/"
+        }
+    },
+    "require": {
+        
+    }
+}

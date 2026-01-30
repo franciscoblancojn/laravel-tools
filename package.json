@@ -1,0 +1,20 @@
+{
+  "name": "franciscoblancojn-laravel-tools",
+  "description": "Libreria con herramientas para Laravel",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "update": "rm -rf vendor && rm composer.lock && composer install",
+    "push-tag": "git addc v$(npm pkg get version | tr -d '\"') && git tag v$(npm pkg get version | tr -d '\"') && git push origin v$(npm pkg get version | tr -d '\"')"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/franciscoblancojn/laravel-tools.git"
+  },
+  "author": "franciscoblancojn",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/franciscoblancojn/laravel-tools/issues"
+  },
+  "homepage": "https://github.com/franciscoblancojn/laravel-tools#readme"
+}
