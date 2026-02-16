@@ -56,10 +56,22 @@ class LaravelToolsController extends BaseController
                 $query->orWhere($key, 'like', '%' . $search . '%');
             }
         }
-        foreach ($this->configQuery['types'] as $key) {
-            $types  = $request->input($key);
+
+        foreach ($this->configQuery['types'] as $key => $value) {
+            // 👇 Si es formato viejo ['status']
+            if (is_int($key)) {
+                $inputKey = $value;   // status
+                $column   = $value;   // status
+            } 
+            // 👇 Si es formato nuevo ['status' => 'r.status']
+            else {
+                $inputKey = $key;     // status
+                $column   = $value;   // r.status
+            }
+            $types = $request->input($inputKey);
+
             if ($types) {
-                $query->whereIn($key, explode(',', $types));
+                $query->whereIn($column, explode(',', $types));
             }
         }
         foreach ($this->configQuery['boolean'] as $key) {
