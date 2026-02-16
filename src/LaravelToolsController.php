@@ -51,10 +51,32 @@ class LaravelToolsController extends BaseController
             return $query;
         }
         $search = $request->input($this->key_search);
-        if ($search) {
-            foreach ($this->configQuery['search'] as $key) {
-                $query->orWhere($key, 'like', '%' . $search . '%');
-            }
+
+        if ($search && !empty($this->configQuery['search'])) {
+
+            $query->where(function ($q) use ($search) {
+
+                foreach ($this->configQuery['search'] as $key => $value) {
+
+                    // 🔹 Formato viejo ['name','email']
+                    if (is_int($key)) {
+                        $column = $value;
+                    }
+                    // 🔹 Formato nuevo ['search' => ['r.name','r.email']]
+                    else {
+                        if (is_array($value)) {
+                            foreach ($value as $col) {
+                                $q->orWhere($col, 'like', '%' . $search . '%');
+                            }
+                            continue;
+                        }
+
+                        $column = $value;
+                    }
+
+                    $q->orWhere($column, 'like', '%' . $search . '%');
+                }
+            });
         }
 
         foreach ($this->configQuery['types'] as $key => $value) {
@@ -62,7 +84,7 @@ class LaravelToolsController extends BaseController
             if (is_int($key)) {
                 $inputKey = $value;   // status
                 $column   = $value;   // status
-            } 
+            }
             // 👇 Si es formato nuevo ['status' => 'r.status']
             else {
                 $inputKey = $key;     // status
@@ -74,50 +96,87 @@ class LaravelToolsController extends BaseController
                 $query->whereIn($column, explode(',', $types));
             }
         }
-        foreach ($this->configQuery['boolean'] as $key) {
-            $bool  = $request->input($key);
+        foreach ($this->configQuery['boolean'] as $key => $value) {
+
+            // 🔹 Formato viejo ['active']
+            if (is_int($key)) {
+                $inputKey = $value;
+                $column   = $value;
+            }
+            // 🔹 Formato nuevo ['active' => 'r.active']
+            else {
+                $inputKey = $key;
+                $column   = $value;
+            }
+
+            $bool = $request->input($inputKey);
+
             if (!is_null($bool)) {
+
                 if (in_array($bool, [1, '1', true, 'true'], true)) {
-                    $query->where($key, true);
+                    $query->where($column, true);
                 } elseif (in_array($bool, [0, '0', false, 'false'], true)) {
-                    $query->where($key, false);
+                    $query->where($column, false);
                 }
             }
         }
-        $date = $request->input($this->key_date);
-        $dateStart = $request->input($this->key_date . '_start');
-        $dateEnd = $request->input($this->key_date . '_end');
-        if ($date || $dateStart || $dateEnd) {
+        foreach ($this->configQuery['date'] as $key => $value) {
+
+            // Formato viejo: ['created_at']
+            if (is_int($key)) {
+                $inputKey = $this->key_date; // 'date'
+                $column   = $value;          // created_at
+            }
+            // Formato nuevo: ['date' => 'r.created_at']
+            else {
+                $inputKey = $key;            // date
+                $column   = $value;          // r.created_at
+            }
+
+            $date       = $request->input($inputKey);
+            $dateStart  = $request->input($inputKey . '_start');
+            $dateEnd    = $request->input($inputKey . '_end');
+
             if ($dateStart) {
                 $dateStart = Carbon::parse(urldecode($dateStart))->startOfDay();
+                $query->where($column, '>=', $dateStart);
             }
+
             if ($dateEnd) {
                 $dateEnd = Carbon::parse(urldecode($dateEnd))->endOfDay();
+                $query->where($column, '<=', $dateEnd);
             }
+
             if ($date) {
-                $date = urldecode($date);
-            }
-            foreach ($this->configQuery['date'] as $key) {
-                if ($dateStart) {
-                    $query->where($key, '>=', $dateStart);
-                }
-                if ($dateEnd) {
-                    $query->where($key, '<=', $dateEnd);
-                }
-                if ($date) {
-                    $query->where($key, $date);
-                }
+                $query->whereDate($column, urldecode($date));
             }
         }
         $sort = $request->input($this->key_sort);
-        if ($sort) {
+
+        if ($sort && !empty($this->configQuery['sort'])) {
+
             $direction = $request->input($this->key_sort_direction, 'asc');
+            $direction = strtolower($direction);
+
             if (!in_array($direction, ['asc', 'desc'])) {
                 $direction = 'asc';
             }
-            foreach ($this->configQuery['sort'] as $key) {
-                if ($sort === $key) {
-                    $query->orderBy($key, $direction);
+            foreach ($this->configQuery['sort'] as $key => $value) {
+
+                // 🔹 Formato viejo ['created_at']
+                if (is_int($key)) {
+                    $inputKey = $value;   // created_at
+                    $column   = $value;   // created_at
+                }
+                // 🔹 Formato nuevo ['created_at' => 'r.created_at']
+                else {
+                    $inputKey = $key;     // created_at
+                    $column   = $value;   // r.created_at
+                }
+
+                if ($sort === $inputKey) {
+                    $query->orderBy($column, $direction);
+                    break; // evita múltiples orderBy innecesarios
                 }
             }
         }
