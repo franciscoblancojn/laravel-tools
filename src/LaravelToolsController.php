@@ -74,7 +74,16 @@ class LaravelToolsController extends BaseController
                         $column = $value;
                     }
 
-                    $q->orWhere($column, 'like', '%' . $search . '%');
+                    // $q->orWhere($column, 'like', '%' . $search . '%');
+                    if (str_contains($column, '.')) {
+                        [$relation, $field] = explode('.', $column, 2);
+
+                        $q->orWhereHas($relation, function ($relQ) use ($field, $search) {
+                            $relQ->where($field, 'like', '%' . $search . '%');
+                        });
+                    } else {
+                        $q->orWhere($column, 'like', '%' . $search . '%');
+                    }
                 }
             });
         }
