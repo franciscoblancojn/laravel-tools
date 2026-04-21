@@ -29,25 +29,28 @@ class LaravelToolsRespond
             $status = $response->getStatusCode();
 
             if ($status < 200 || $status >= 300) {
-                $status = $response->getStatusCode();
+
+                if (property_exists($response, 'exception') && $response->exception) {
+                    $e = $response->exception;
+
+                    return response()->json([
+                        'success' => false,
+                        'code' => $e->getCode() ?: 500,
+                        'message' => $e->getMessage(),
+                        'error' => [
+                            'file' => $e->getFile(),
+                            'line' => $e->getLine(),
+                        ],
+                    ], $e->getCode() ?: 500);
+                }
+
                 $message = 'Error';
 
-                // 1️⃣ Si es JsonResponse y trae message
                 if ($response instanceof JsonResponse) {
                     $data = $response->getData(true);
                     if (!empty($data['message'])) {
                         $message = $data['message'];
                     }
-                }
-
-                // 2️⃣ Si viene de abort() o excepción HTTP
-                if (property_exists($response, 'exception') && $response->exception) {
-                    $message = $response->exception->getMessage() ?: $message;
-                }
-
-                // 3️⃣ Evitar "Server Error" genérico si hay algo mejor
-                if ($message === 'Server Error' && $status !== 500) {
-                    $message = 'Error inesperado';
                 }
 
                 throw new Exception($message, $status);
@@ -69,7 +72,11 @@ class LaravelToolsRespond
             return response()->json([
                 'success' => false,
                 'code' => $e->getCode(),
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
+                'error' => [
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
+                ],
             ], $e->getCode() ?: 500);
         } finally {
             if ($request['log_disabled'] !== true && $this->function_log) {
