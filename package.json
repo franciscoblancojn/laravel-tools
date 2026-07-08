@@ -1,7 +1,7 @@
 {
   "name": "franciscoblancojn-laravel-tools",
   "description": "Libreria con herramientas para Laravel",
-  "version": "1.0.5",
+  "version": "1.1.0",
   "main": "index.js",
   "scripts": {
     "update": "rm -rf vendor && rm composer.lock && composer install",
