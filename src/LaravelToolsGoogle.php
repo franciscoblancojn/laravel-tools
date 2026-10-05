@@ -46,6 +46,7 @@ class LaravelToolsGoogle
      * Sube una conversión offline (por GCLID) a Google Ads vía Data Manager
      * API. Requiere credenciales OAuth (client id/secret + refresh token)
      * con el scope https://www.googleapis.com/auth/datamanager.
+     * `validate_only` => true valida el payload sin registrar la conversión.
      */
     public function sendAdsOfflineConversion($data = [
         "conversion_action_id" => null,
@@ -54,6 +55,7 @@ class LaravelToolsGoogle
         "transaction_id" => null,
         "conversion_value" => 0,
         "currency_code" => "COP",
+        "validate_only" => false,
     ])
     {
         $gclid = $data['gclid'] ?? null;
@@ -109,7 +111,7 @@ class LaravelToolsGoogle
                     ],
                 ],
             ],
-            'validateOnly' => false,
+            'validateOnly' => (bool) ($data['validate_only'] ?? false),
         ];
 
         return $this->post(
@@ -123,6 +125,8 @@ class LaravelToolsGoogle
      * Lista las acciones de conversión de la cuenta de Ads con su ID real
      * (el que pide sendAdsOfflineConversion). Útil para configurar
      * `conversionActionId` sin entrar a la consola de Google Ads.
+     * Solo las de `type` UPLOAD_CLICKS aceptan conversiones por GCLID; una
+     * acción de sitio web (WEBPAGE) rechaza la subida.
      */
     public function listAdsConversionActions()
     {
@@ -146,7 +150,7 @@ class LaravelToolsGoogle
 
         return $this->post(
             "https://googleads.googleapis.com/{$apiVersion}/customers/{$customerId}/googleAds:search",
-            ['query' => 'SELECT conversion_action.id, conversion_action.name, conversion_action.status FROM conversion_action'],
+            ['query' => 'SELECT conversion_action.id, conversion_action.name, conversion_action.status, conversion_action.type, conversion_action.category FROM conversion_action'],
             $headers
         );
     }
